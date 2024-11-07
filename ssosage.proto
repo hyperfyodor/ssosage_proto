@@ -6,20 +6,32 @@ option go_package = "github.com/hyperfyodor/ssosage_proto";
 package ssosage_proto;
 
 service Ssosage {
-    rpc Register(RegisterRequest) returns (google.protobuf.Empty);
-    rpc Login(LoginRequest) returns (LoginResponse);
+    // add information about application roles, secret and name - name is unique identifier
+    rpc RegisterApp(RegisterAppRequest) returns (google.protobuf.Empty);
+    // creates user/client with one role per registered app
+    //  (what if app was registered after client registration? client will need to add the role I guess)
+    rpc RegisterClient(RegisterClientRequest) returns (google.protobuf.Empty);
+    // generates jwt token that is signed with app secret and contains map app_name -> role
+    rpc GenerateToken(GenerateTokenRequest) returns (GenerateTokenResponse);
 }
 
-message RegisterRequest {
+message RegisterAppRequest {
+    string name = 1;
+    string secret = 2;
+    repeated string roles = 3;
+}
+
+message RegisterClientRequest {
+    string name = 1; // unique identifier
+    string password = 2;
+    map<string, string> roles = 3; // maps app_name to desired role 
+}
+
+message GenerateTokenRequest {
     string name = 1;
     string password = 2;
 }
 
-message LoginRequest {
-    string name = 1;
-    string password = 2;
-}
-
-message LoginResponse {
+message GenerateTokenResponse{
     string token = 1;
 }
