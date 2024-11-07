@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -30,11 +29,11 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SsosageClient interface {
 	// add information about application roles, secret and name - name is unique identifier
-	RegisterApp(ctx context.Context, in *RegisterAppRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RegisterApp(ctx context.Context, in *RegisterAppRequest, opts ...grpc.CallOption) (*RegisterAppResponse, error)
 	// creates user/client with one role per registered app
 	//
 	//	(what if app was registered after client registration? client will need to add the role I guess)
-	RegisterClient(ctx context.Context, in *RegisterClientRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RegisterClient(ctx context.Context, in *RegisterClientRequest, opts ...grpc.CallOption) (*RegisterClientResponse, error)
 	// generates jwt token that is signed with app secret and contains map app_name -> role
 	GenerateToken(ctx context.Context, in *GenerateTokenRequest, opts ...grpc.CallOption) (*GenerateTokenResponse, error)
 }
@@ -47,9 +46,9 @@ func NewSsosageClient(cc grpc.ClientConnInterface) SsosageClient {
 	return &ssosageClient{cc}
 }
 
-func (c *ssosageClient) RegisterApp(ctx context.Context, in *RegisterAppRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *ssosageClient) RegisterApp(ctx context.Context, in *RegisterAppRequest, opts ...grpc.CallOption) (*RegisterAppResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
+	out := new(RegisterAppResponse)
 	err := c.cc.Invoke(ctx, Ssosage_RegisterApp_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -57,9 +56,9 @@ func (c *ssosageClient) RegisterApp(ctx context.Context, in *RegisterAppRequest,
 	return out, nil
 }
 
-func (c *ssosageClient) RegisterClient(ctx context.Context, in *RegisterClientRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *ssosageClient) RegisterClient(ctx context.Context, in *RegisterClientRequest, opts ...grpc.CallOption) (*RegisterClientResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
+	out := new(RegisterClientResponse)
 	err := c.cc.Invoke(ctx, Ssosage_RegisterClient_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -82,11 +81,11 @@ func (c *ssosageClient) GenerateToken(ctx context.Context, in *GenerateTokenRequ
 // for forward compatibility.
 type SsosageServer interface {
 	// add information about application roles, secret and name - name is unique identifier
-	RegisterApp(context.Context, *RegisterAppRequest) (*emptypb.Empty, error)
+	RegisterApp(context.Context, *RegisterAppRequest) (*RegisterAppResponse, error)
 	// creates user/client with one role per registered app
 	//
 	//	(what if app was registered after client registration? client will need to add the role I guess)
-	RegisterClient(context.Context, *RegisterClientRequest) (*emptypb.Empty, error)
+	RegisterClient(context.Context, *RegisterClientRequest) (*RegisterClientResponse, error)
 	// generates jwt token that is signed with app secret and contains map app_name -> role
 	GenerateToken(context.Context, *GenerateTokenRequest) (*GenerateTokenResponse, error)
 	mustEmbedUnimplementedSsosageServer()
@@ -99,10 +98,10 @@ type SsosageServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSsosageServer struct{}
 
-func (UnimplementedSsosageServer) RegisterApp(context.Context, *RegisterAppRequest) (*emptypb.Empty, error) {
+func (UnimplementedSsosageServer) RegisterApp(context.Context, *RegisterAppRequest) (*RegisterAppResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterApp not implemented")
 }
-func (UnimplementedSsosageServer) RegisterClient(context.Context, *RegisterClientRequest) (*emptypb.Empty, error) {
+func (UnimplementedSsosageServer) RegisterClient(context.Context, *RegisterClientRequest) (*RegisterClientResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterClient not implemented")
 }
 func (UnimplementedSsosageServer) GenerateToken(context.Context, *GenerateTokenRequest) (*GenerateTokenResponse, error) {
