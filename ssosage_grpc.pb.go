@@ -28,13 +28,11 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SsosageClient interface {
-	// add information about application roles, secret and name - name is unique identifier
+	// registers new app - stores app name, secret and roles, if it already exists returns an error
 	RegisterApp(ctx context.Context, in *RegisterAppRequest, opts ...grpc.CallOption) (*RegisterAppResponse, error)
-	// creates user/client with one role per registered app
-	//
-	//	(what if app was registered after client registration? client will need to add the role I guess)
+	// registers new client - stores client name and pass hash, if it already exists returns an error
 	RegisterClient(ctx context.Context, in *RegisterClientRequest, opts ...grpc.CallOption) (*RegisterClientResponse, error)
-	// generates jwt token that is signed with app secret and contains map app_name -> role
+	// generates token for a specific app - token contains client name
 	GenerateToken(ctx context.Context, in *GenerateTokenRequest, opts ...grpc.CallOption) (*GenerateTokenResponse, error)
 }
 
@@ -80,13 +78,11 @@ func (c *ssosageClient) GenerateToken(ctx context.Context, in *GenerateTokenRequ
 // All implementations must embed UnimplementedSsosageServer
 // for forward compatibility.
 type SsosageServer interface {
-	// add information about application roles, secret and name - name is unique identifier
+	// registers new app - stores app name, secret and roles, if it already exists returns an error
 	RegisterApp(context.Context, *RegisterAppRequest) (*RegisterAppResponse, error)
-	// creates user/client with one role per registered app
-	//
-	//	(what if app was registered after client registration? client will need to add the role I guess)
+	// registers new client - stores client name and pass hash, if it already exists returns an error
 	RegisterClient(context.Context, *RegisterClientRequest) (*RegisterClientResponse, error)
-	// generates jwt token that is signed with app secret and contains map app_name -> role
+	// generates token for a specific app - token contains client name
 	GenerateToken(context.Context, *GenerateTokenRequest) (*GenerateTokenResponse, error)
 	mustEmbedUnimplementedSsosageServer()
 }
