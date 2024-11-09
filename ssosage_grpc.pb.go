@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -20,16 +19,21 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Ssosage_Register_FullMethodName = "/ssosage_proto.Ssosage/Register"
-	Ssosage_Login_FullMethodName    = "/ssosage_proto.Ssosage/Login"
+	Ssosage_RegisterApp_FullMethodName    = "/ssosage_proto.Ssosage/RegisterApp"
+	Ssosage_RegisterClient_FullMethodName = "/ssosage_proto.Ssosage/RegisterClient"
+	Ssosage_GenerateToken_FullMethodName  = "/ssosage_proto.Ssosage/GenerateToken"
 )
 
 // SsosageClient is the client API for Ssosage service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SsosageClient interface {
-	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
+	// registers new app - stores app name, secret and roles, if it already exists returns an error
+	RegisterApp(ctx context.Context, in *RegisterAppRequest, opts ...grpc.CallOption) (*RegisterAppResponse, error)
+	// registers new client - stores client name and pass hash, if it already exists returns an error
+	RegisterClient(ctx context.Context, in *RegisterClientRequest, opts ...grpc.CallOption) (*RegisterClientResponse, error)
+	// generates token for a specific app - token contains client name
+	GenerateToken(ctx context.Context, in *GenerateTokenRequest, opts ...grpc.CallOption) (*GenerateTokenResponse, error)
 }
 
 type ssosageClient struct {
@@ -40,20 +44,30 @@ func NewSsosageClient(cc grpc.ClientConnInterface) SsosageClient {
 	return &ssosageClient{cc}
 }
 
-func (c *ssosageClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *ssosageClient) RegisterApp(ctx context.Context, in *RegisterAppRequest, opts ...grpc.CallOption) (*RegisterAppResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, Ssosage_Register_FullMethodName, in, out, cOpts...)
+	out := new(RegisterAppResponse)
+	err := c.cc.Invoke(ctx, Ssosage_RegisterApp_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *ssosageClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+func (c *ssosageClient) RegisterClient(ctx context.Context, in *RegisterClientRequest, opts ...grpc.CallOption) (*RegisterClientResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(LoginResponse)
-	err := c.cc.Invoke(ctx, Ssosage_Login_FullMethodName, in, out, cOpts...)
+	out := new(RegisterClientResponse)
+	err := c.cc.Invoke(ctx, Ssosage_RegisterClient_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ssosageClient) GenerateToken(ctx context.Context, in *GenerateTokenRequest, opts ...grpc.CallOption) (*GenerateTokenResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateTokenResponse)
+	err := c.cc.Invoke(ctx, Ssosage_GenerateToken_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +78,12 @@ func (c *ssosageClient) Login(ctx context.Context, in *LoginRequest, opts ...grp
 // All implementations must embed UnimplementedSsosageServer
 // for forward compatibility.
 type SsosageServer interface {
-	Register(context.Context, *RegisterRequest) (*emptypb.Empty, error)
-	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+	// registers new app - stores app name, secret and roles, if it already exists returns an error
+	RegisterApp(context.Context, *RegisterAppRequest) (*RegisterAppResponse, error)
+	// registers new client - stores client name and pass hash, if it already exists returns an error
+	RegisterClient(context.Context, *RegisterClientRequest) (*RegisterClientResponse, error)
+	// generates token for a specific app - token contains client name
+	GenerateToken(context.Context, *GenerateTokenRequest) (*GenerateTokenResponse, error)
 	mustEmbedUnimplementedSsosageServer()
 }
 
@@ -76,11 +94,14 @@ type SsosageServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSsosageServer struct{}
 
-func (UnimplementedSsosageServer) Register(context.Context, *RegisterRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
+func (UnimplementedSsosageServer) RegisterApp(context.Context, *RegisterAppRequest) (*RegisterAppResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterApp not implemented")
 }
-func (UnimplementedSsosageServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+func (UnimplementedSsosageServer) RegisterClient(context.Context, *RegisterClientRequest) (*RegisterClientResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterClient not implemented")
+}
+func (UnimplementedSsosageServer) GenerateToken(context.Context, *GenerateTokenRequest) (*GenerateTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GenerateToken not implemented")
 }
 func (UnimplementedSsosageServer) mustEmbedUnimplementedSsosageServer() {}
 func (UnimplementedSsosageServer) testEmbeddedByValue()                 {}
@@ -103,38 +124,56 @@ func RegisterSsosageServer(s grpc.ServiceRegistrar, srv SsosageServer) {
 	s.RegisterService(&Ssosage_ServiceDesc, srv)
 }
 
-func _Ssosage_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RegisterRequest)
+func _Ssosage_RegisterApp_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterAppRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SsosageServer).Register(ctx, in)
+		return srv.(SsosageServer).RegisterApp(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Ssosage_Register_FullMethodName,
+		FullMethod: Ssosage_RegisterApp_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SsosageServer).Register(ctx, req.(*RegisterRequest))
+		return srv.(SsosageServer).RegisterApp(ctx, req.(*RegisterAppRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Ssosage_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(LoginRequest)
+func _Ssosage_RegisterClient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterClientRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SsosageServer).Login(ctx, in)
+		return srv.(SsosageServer).RegisterClient(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Ssosage_Login_FullMethodName,
+		FullMethod: Ssosage_RegisterClient_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SsosageServer).Login(ctx, req.(*LoginRequest))
+		return srv.(SsosageServer).RegisterClient(ctx, req.(*RegisterClientRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Ssosage_GenerateToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SsosageServer).GenerateToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Ssosage_GenerateToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SsosageServer).GenerateToken(ctx, req.(*GenerateTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -147,12 +186,16 @@ var Ssosage_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*SsosageServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Register",
-			Handler:    _Ssosage_Register_Handler,
+			MethodName: "RegisterApp",
+			Handler:    _Ssosage_RegisterApp_Handler,
 		},
 		{
-			MethodName: "Login",
-			Handler:    _Ssosage_Login_Handler,
+			MethodName: "RegisterClient",
+			Handler:    _Ssosage_RegisterClient_Handler,
+		},
+		{
+			MethodName: "GenerateToken",
+			Handler:    _Ssosage_GenerateToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
